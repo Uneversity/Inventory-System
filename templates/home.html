@@ -1,0 +1,191 @@
+<link rel="stylesheet" href="/static/styles.css">
+
+<div class="page-header">
+        <h1 style="margin-bottom: auto;">Inventory System</h1>
+        <div class="user-info">
+            <span style="color: #ccc; font-size: 1.1em; ">{{username}} · {{role}}</span>
+            <a href="/logout">Sign out</a>
+        </div>
+    </div>
+    <p style="color: rgb(255, 255, 255); font-size: 0.9em; margin-left: 10px; margin-top: auto;"> Click any item name or quantity to edit it directly.</p>
+
+    <div class="toolbar">
+        <input type="text" id="search" placeholder="Search items..." oninput="searchTable()">
+        <select id="categoryFilter" oninput="filterTable()">
+            <option value="">All</option>
+            <option value="Food">Food</option>
+            <option value="Electronics">Electronics</option>
+        </select>
+    </div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th onclick="sortTable(0)">Item</th>
+                <th onclick="sortTable(1)">Quantity</th>
+                <th onclick="sortTable(2)">Category</th>
+                <th>Last Modified</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {{rows | safe}}
+        </tbody>
+    </table>
+</div>
+
+    <hr class="divider">
+
+    <div class="add-label">
+        <h3>Add Item</h3>
+    </div>
+
+    <div class="add-section card-add-item">
+        <form method="POST" action="/add" style="display:contents;">
+            <div class="field">
+                <label>Item</label>
+                <input name="item" placeholder="e.g. Apples">
+            </div>
+            <div class="field">
+                <label>Qty</label>
+                <input type="number" name="quantity" placeholder="0" min="0">
+            </div>
+            <div class="field">
+                <label>Category</label>
+                <input name="category" placeholder="Food">
+            </div>
+            <button type="submit" class="btn-add">Add</button> 
+        </form>
+    </div>
+
+    <div class= "footer-bar">
+        <form style="display:contents;" method="POST" action="/undo">
+            <button type="submit" class="btn-ghost">↩ Undo</button>
+        </form>
+        <form style="display:contents;" method="POST" action="/redo">
+            <button type="submit" class="btn-ghost">↪ Redo</button>
+        </form>
+        <a href="/export"><button class="btn-ghost">Export CSV</button></a>
+        <a href="/log"><button class="btn-ghost">Activity log</button></a>
+    </div>
+
+    <hr class="divider">
+
+    <div>
+        <form method="POST" action="/set_threshold" style="display:contents;">
+            <div class= "threshold-group">
+                <span>Low stock at</span>
+                <input type="number" name="threshold" value={{low_item_threshold}} placeholder="{{low_item_threshold}}" min="0">
+                <button type="submit" class="btn-ghost">Set</button>
+            </div>
+        </form>
+    </div>
+
+{% raw %}
+<script>
+        // Show the name edit form, hide the display span
+        // Swaps the item name text for the edit form so the user can type a new name
+
+        let currentlyEditing = null; // Track which item is currently being edited to prevent multiple open forms
+
+        function startEditName(span, item) {
+            if (currentlyEditing) {
+                cancelEdit(currentlyEditing); // close whatever's open first
+            }
+            const td = span.parentElement;
+            span.style.display = "none";
+            const form = td.querySelector(".edit-name-form");
+            form.style.display = "inline";
+            currentlyEditing = form.querySelector("button[type='button']"); // store reference to cancel button
+}
+
+        // Show the quantity edit form, hide the display span
+        // Same pattern as above but for editing the quantity instead
+        function startEditQty(span, item, amount) {
+            if (currentlyEditing) {
+                cancelEdit(currentlyEditing); // close whatever's open first
+            }
+            const td = span.parentElement;
+            span.style.display = "none";
+            const form = td.querySelector(".edit-qty-form");
+            form.style.display = "inline";
+            currentlyEditing = form.querySelector("button[type='button']"); // store reference to cancel button
+        }
+
+        // Cancel editing of names/quantities — hide the form and show the original display span
+        // Hides the edit form and restores the original display span, discarding changes
+        function cancelEdit(button) {
+            const form = button.closest("form");
+            const td = form.parentElement;
+            form.style.display = "none";
+            td.querySelector("span").style.display = "inline";
+        }
+        
+        // Runs on every keystroke in the search box — hides rows that don't match
+        function searchTable() {
+            let searchValue = document.getElementById("search").value;
+            searchValue = searchValue.toLowerCase();
+            console.log(searchValue);
+            let rows = document.querySelectorAll("tr")
+            rows.forEach(row => {
+                const itemCell = row.querySelector("td:first-child");
+                if (itemCell) {{
+                    const itemText = itemCell.innerText.toLowerCase();
+                    if (itemText.includes(searchValue)) {
+                        row.style.display = "";
+                    } else {
+                        row.style.display = "none";
+                    }
+                }}
+            });
+        }
+
+        function filterTable() {
+            const filterValue = document.getElementById("categoryFilter").value;
+            const rows = document.querySelectorAll("tr");
+            rows.forEach(row => {
+                const categoryCell = row.querySelector("td:nth-child(3)");
+                if (categoryCell) {
+                    const categoryText = categoryCell.innerText; // Get the category text from the cell
+                    if (filterValue === "" || categoryText === filterValue) {
+                        row.style.display = "";
+                    } else {
+                        row.style.display = "none";
+                    }
+                }
+            });
+        }
+
+        //function sortTable(columnIndex) {
+            //const table = document.querySelector("table");
+            //const rows = Array.from(table.rows).slice(1); // Skip header row
+            //const isNumeric = columnIndex === 1; // Quantity column is numeric
+            //rows.sort((a, b) => {
+                //const cellA = a.cells[columnIndex].innerText;
+                //const cellB = b.cells[columnIndex].innerText;
+                //if (isNumeric) {
+                    //return parseInt(cellA) - parseInt(cellB);
+                //} else {
+                    //return cellA.localeCompare(cellB);
+                //}
+            //});
+            //rows.forEach(row => table.appendChild(row)); // Re-append rows in sorted order
+
+            
+        // New version that only sorts the tbody rows, leaving the header fixed and preventing issues with hidden rows from search/filter}
+
+        function sortTable(columnIndex) {
+            const table = document.querySelector("table");
+            const tbody = table.querySelector("tbody");
+            const rows = Array.from(tbody.querySelectorAll("tr"));
+            const isNumeric = columnIndex === 1;
+            rows.sort((a, b) => {
+                const cellA = a.cells[columnIndex].innerText;
+                const cellB = b.cells[columnIndex].innerText;
+                return isNumeric ? parseInt(cellA) - parseInt(cellB) : cellA.localeCompare(cellB);
+            });
+            rows.forEach(row => tbody.appendChild(row));
+}
+</script>
+{% endraw %}

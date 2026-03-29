@@ -1,0 +1,23 @@
+<link rel="stylesheet" href="/static/styles.css">
+
+<div class= "page">
+    <div class= "login-card">
+        <h1>Inventory System</h1>
+        <p class="subtitle">Log in to your account</p>
+        {% if error %}<p class="error" style="color: red;">{{ error | safe }}</p>{% endif %}
+            <form method="POST">
+                <div class= "field">                  
+                    <lable>Username:</lable>
+                    <input name="username"><br>
+                </div>  
+                    
+                <div class= "field">             
+                    <lable>Password:</lable>
+                    <input type="password" name="password"><br>
+                </div>  
+                                
+                <button type="submit" class="btn-primary">Sign in</button>
+                                
+            </form>
+        </div>
+    </div>

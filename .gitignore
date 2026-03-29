@@ -1,0 +1,17 @@
+# Local secrets — never push this
+.env
+
+# Data files — these live on the server, not in the repo
+inventory.json
+users.json
+activity_log.txt
+inventory.csv
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+venv/
+.venv/

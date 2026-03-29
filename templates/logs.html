@@ -1,0 +1,23 @@
+<link rel="stylesheet" href="/static/styles.css">
+
+<div class= "page">
+    <h1 style= margin-left:10px;>Activity Log</h1>
+
+    <a href="/"><button class="btn-backtoinventory">Back to Inventory</button></a>
+
+    <div class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Items</th>
+                    <th>Action</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ rows | safe }}
+            </tbody>
+        </table>
+    </div>
+</div>
