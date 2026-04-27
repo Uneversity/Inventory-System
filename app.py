@@ -290,7 +290,7 @@ def load_categories_and_colors():
     # Ensure Uncategorized exists
     if "Uncategorized" not in user_data[username]["categories_and_colors"]:
         user_data[username]["categories_and_colors"]["Uncategorized"] = "#FFFFFF"
-        
+
 # ---------------------------------------------------------------------------
 # UTILITY FUNCTIONS
 # ---------------------------------------------------------------------------
@@ -1033,7 +1033,8 @@ def edit_category():
 
     return redirect("/")
 
-load_users() # Load user credentials from file when the application starts
+with app.app_context():
+    load_users()
 
 if __name__ == "__main__":
     app.run(debug=False)
