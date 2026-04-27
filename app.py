@@ -1033,8 +1033,8 @@ def edit_category():
 
     return redirect("/")
 
-with app.app_context():
-    load_users()
+#with app.app_context():
+    #load_users()
 
 if __name__ == "__main__":
     app.run(debug=False)
