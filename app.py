@@ -81,11 +81,11 @@ class ActivityLog(db.Model):
     item = db.Column(db.String(200), nullable=False)
     detail = db.Column(db.Text)
 
-@app.route("/create_tables")
-def create_tables():
-    """One-time setup: creates all database tables"""
-    db.create_all()
-    return "Database tables created! You can delete this route now."
+#@app.route("/create_tables")
+#def create_tables():
+    #"""One-time setup: creates all database tables"""
+    #db.create_all()
+    #return "Database tables created! You can delete this route now."
 
 # ---------------------------------------------------------------------------
 # DATABASE INTERACTION FUNCTIONS (LOAD/SAVE FOR INVENTORY, LOGS, USERS, CATEGORIES)
@@ -1033,8 +1033,8 @@ def edit_category():
 
     return redirect("/")
 
-#with app.app_context():
-    #load_users()
+with app.app_context():
+    load_users()
 
 if __name__ == "__main__":
     app.run(debug=False)
