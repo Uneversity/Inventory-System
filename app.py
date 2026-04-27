@@ -13,7 +13,6 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
 app = Flask(__name__)
-db = SQLAlchemy(app)
 
 #API Key set to an environment variable for security.
 app.secret_key = os.environ.get("SECRET_KEY", "dev-only-key-change-me")
@@ -25,6 +24,8 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # Heroku provides the database URL in the format "postgres://", but SQLAlchemy expects "postgresql://". This code ensures compatibility by replacing the prefix if necessary.
 if app.config["SQLALCHEMY_DATABASE_URI"].startswith("postgres://"):
     app.config["SQLALCHEMY_DATABASE_URI"] = app.config["SQLALCHEMY_DATABASE_URI"].replace("postgres://", "postgresql://", 1)
+
+db = SQLAlchemy(app)
 
 credentials = {}
 user_data = {}
