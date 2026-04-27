@@ -88,7 +88,7 @@ def create_tables():
     return "Database tables created! You can delete this route now."
 
 # ---------------------------------------------------------------------------
-# FILE FUNCTIONS
+# DATABASE INTERACTION FUNCTIONS (LOAD/SAVE FOR INVENTORY, LOGS, USERS, CATEGORIES)
 # ---------------------------------------------------------------------------
 
 def make_sure_data_structure_exists_for_user(username):
@@ -106,93 +106,191 @@ def make_sure_data_structure_exists_for_user(username):
             }
         }
 
-def file_pathing_function(username):
-
-    os.makedirs("data", exist_ok=True) # Create a directory to store inventory files if it doesn't exist\
-
-    user_folder = os.path.join("data", f"{username}_Data") # This is the path template for user-specific inventory files
-    os.makedirs(user_folder, exist_ok=True) # Ensure the directory for user data exists
-
-
-    paths = {
-        "inventory": os.path.join(user_folder, f"{username}_Inventory.json"),
-        "log": os.path.join(user_folder, f"{username}_Activity_Log.txt"),
-        "categories_and_colors": os.path.join(user_folder, f"{username}_Categories_and_Colors.json")
-    }
-
-    return paths
-
 def save():
-
-    username = session.get("username") #Getting who is logged in
-    path = file_pathing_function(username) #Set up file paths for that user
-
-    inventory = user_data[username]["inventory_dictionary"] #Getting their inventory
-    inventory_dictionary = dict(sorted(inventory.items())) #Sorting it alphabetically
+    username = session.get("username")
+    user = User.query.filter_by(username=username).first()
     
-    user_data[username]["inventory_dictionary"] = inventory_dictionary #Putting sorted inventory back into user_data
-    with open(path["inventory"], "w") as f:
-        json.dump(inventory_dictionary, f)
+    # Delete old inventory items for this user
+    InventoryItem.query.filter_by(user_id=user.id).delete()
+    
+    # Insert current inventory
+    inventory = user_data[username]["inventory_dictionary"]
+    for item_name, data in inventory.items():
+        new_item = InventoryItem(
+            user_id=user.id,
+            name=item_name,
+            quantity=data["quantity"],
+            category=data["category"],
+            last_modified=data.get("last_modified", "Never")
+        )
+        db.session.add(new_item)
+    
+    db.session.commit()
 
 def load():
     username = session.get("username")
     make_sure_data_structure_exists_for_user(username)
-    path = file_pathing_function(username) #Set up file paths for that user
-    try:
-        with open(path["inventory"], "r") as f: 
-            user_data[username]["inventory_dictionary"] = json.load(f)
-    except FileNotFoundError:
-        user_data[username]["inventory_dictionary"] = {} #If file doesnt exist yet, create empty inventory for user
-    except KeyError:
-        return redirect("/login") #If for some reason the username isn't in session or user_data, redirect to login
+    
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        user_data[username]["inventory_dictionary"] = {}
+        return
+    
+    items = InventoryItem.query.filter_by(user_id=user.id).all()
+    
+    user_data[username]["inventory_dictionary"] = {
+        item.name: {
+            "quantity": item.quantity,
+            "category": item.category,
+            "last_modified": item.last_modified or "Never"
+        }
+        for item in items
+    }
 
 def save_log():
     username = session.get("username")
-    path = file_pathing_function(username) #Set up file paths for that user
-    with open(path["log"], "w") as f:
-        json.dump(user_data[username]["activity_log"], f)
-        f.write("\n")  # Add newline after each log entry for readability
+    user = User.query.filter_by(username=username).first()
+    
+    if not user:
+        return
+    
+    # Get the most recent log entry (the one we just added)
+    logs = user_data[username]["activity_log"]
+    if not logs:
+        return
+    
+    # Add only the newest log entry to database
+    latest_log = logs[-1]
+    new_log = ActivityLog(
+        user_id=user.id,
+        timestamp=latest_log["timestamp"],
+        action=latest_log["action"],
+        item=latest_log["item"],
+        detail=latest_log["detail"]
+    )
+    db.session.add(new_log)
+    db.session.commit()
 
 def load_log():
     username = session.get("username")
     make_sure_data_structure_exists_for_user(username)
-    path = file_pathing_function(username) #Set up file paths for that user
-    try:
-        with open(path["log"], "r") as f:
-            user_data[username]["activity_log"] = json.load(f)
-    except FileNotFoundError:
-        user_data[username]["activity_log"] = [] #If file doesnt exist yet, create empty log for user
+    
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        user_data[username]["activity_log"] = []
+        return
+    
+    logs = ActivityLog.query.filter_by(user_id=user.id).order_by(ActivityLog.id.desc()).all()
+    
+    user_data[username]["activity_log"] = [
+        {
+            "timestamp": log.timestamp,
+            "action": log.action,
+            "item": log.item,
+            "detail": log.detail
+        }
+        for log in logs
+    ]
 
 def save_users():
-    with open("users.json", "w") as f:
-        json.dump(credentials, f)
-#def save_history(): Eventually we could also save history/future stacks to files for persistence across rts, atm we'll just keep in memory
+    """Save users to database (no longer needed since register saves directly, but kept for consistency)"""
+    # This function is mostly obsolete now because:
+    # - register_user() saves directly to database
+    # - login doesn't modify user data
+    # But we can keep it in case we ever need to bulk-update users
+    
+    for username, data in credentials.items():
+        # Check if user exists in database
+        user = User.query.filter_by(username=username).first()
+        
+        if user:
+            # Update existing user
+            user.password_hash = data["password"]
+            user.role = data.get("role", "user")
+        else:
+            # Create new user
+            new_user = User(
+                username=username,
+                password_hash=data["password"],
+                role=data.get("role", "user"),
+                low_item_threshold=5
+            )
+            db.session.add(new_user)
+    
+    db.session.commit()
 
 def load_users():
     global credentials
-    try:
-        with open("users.json", "r") as f:
-            credentials = json.load(f)
-    except FileNotFoundError:
-        default_password = os.getenv("ADMIN_PASSWORD", "admin123")# In a real application, you should set this environment variable to a secure password and not hardcode it
-        credentials["TesterUser"] = {"password": generate_password_hash(default_password), "role": "admin"}
-        save_users()
+    
+    users = User.query.all()
+    
+    credentials = {
+        user.username: {
+            "password": user.password_hash,
+            "role": user.role
+        }
+        for user in users
+    }
+    
+    # Create default admin if database is empty
+    if not credentials:
+        default_password = os.getenv("ADMIN_PASSWORD", "admin123")
+        admin_user = User(
+            username="TesterUser",
+            password_hash=generate_password_hash(default_password),
+            role="admin",
+            low_item_threshold=5
+        )
+        db.session.add(admin_user)
+        db.session.commit()
+        
+        credentials["TesterUser"] = {
+            "password": admin_user.password_hash,
+            "role": "admin"
+        }
 
 def save_categories_and_colors():
     username = session.get("username")
-    path = file_pathing_function(username) #Set up file paths for that user
-    with open(path["categories_and_colors"], "w") as f:
-        json.dump(user_data[username]["categories_and_colors"], f)
+    user = User.query.filter_by(username=username).first()
+    
+    if not user:
+        return
+    
+    # Delete old categories
+    Category.query.filter_by(user_id=user.id).delete()
+    
+    # Insert current categories
+    categories = user_data[username]["categories_and_colors"]
+    for cat_name, color in categories.items():
+        new_cat = Category(
+            user_id=user.id,
+            name=cat_name,
+            color=color
+        )
+        db.session.add(new_cat)
+    
+    db.session.commit()
 
 def load_categories_and_colors():
     username = session.get("username")
     make_sure_data_structure_exists_for_user(username)
-    path = file_pathing_function(username) #Set up file paths for that user
-    try:
-        with open(path["categories_and_colors"], "r") as f:
-            user_data[username]["categories_and_colors"] = json.load(f)
-    except FileNotFoundError:
+    
+    user = User.query.filter_by(username=username).first()
+    if not user:
         user_data[username]["categories_and_colors"] = {"Uncategorized": "#FFFFFF"}
+        return
+    
+    categories = Category.query.filter_by(user_id=user.id).all()
+    
+    user_data[username]["categories_and_colors"] = {
+        cat.name: cat.color
+        for cat in categories
+    }
+    
+    # Ensure Uncategorized exists
+    if "Uncategorized" not in user_data[username]["categories_and_colors"]:
+        user_data[username]["categories_and_colors"]["Uncategorized"] = "#FFFFFF"
+        
 # ---------------------------------------------------------------------------
 # UTILITY FUNCTIONS
 # ---------------------------------------------------------------------------
@@ -301,8 +399,24 @@ def register_user():
             return render_template("register.html", error="Username already exists") #return error message if username is taken
         if not username or not password: #Check if username or password form was submitted empty
             return render_template("register.html", error="Username and password are required")
-        credentials[username] = {"password": generate_password_hash(password), "role": "user"}
-        save_users()
+        
+
+        # Create new user in database
+        new_user = User(
+            username=username,
+            password_hash=generate_password_hash(password),
+            role="user",
+            low_item_threshold=5
+        )
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        # Update in-memory credentials
+        credentials[username] = {
+            "password": new_user.password_hash,
+            "role": "user"
+        }
 
         #initiate user data structure for new user in memory (also created when loading inventory, but this ensures it's there from the start)
         user_data[username] = {
