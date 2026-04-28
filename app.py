@@ -18,7 +18,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-only-key-change-me")
 
 #SQL Config
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///inventory.db")
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///local_inventory.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Heroku provides the database URL in the format "postgres://", but SQLAlchemy expects "postgresql://". This code ensures compatibility by replacing the prefix if necessary.
@@ -86,6 +86,11 @@ class ActivityLog(db.Model):
     #"""One-time setup: creates all database tables"""
     #db.create_all()
     #return "Database tables created! You can delete this route now."
+
+#@app.route("/debug_db")
+#def debug_db():
+    #db_uri = app.config['SQLALCHEMY_DATABASE_URI']
+    #return f"<h1>Database URI:</h1><p>{db_uri}</p>"
 
 # ---------------------------------------------------------------------------
 # DATABASE INTERACTION FUNCTIONS (LOAD/SAVE FOR INVENTORY, LOGS, USERS, CATEGORIES)
@@ -314,11 +319,11 @@ def set_user_data(key, value):
 
 def snapshot():
 
-    username = session.get("username")
-    print(f"DEBUG: username={username}, user_data keys={list(user_data.keys())}")
+    #username = session.get("username")
+    #print(f"DEBUG: username={username}, user_data keys={list(user_data.keys())}")
     
     history = get_user_data("history")
-    print(f"DEBUG: history exists? {history is not None}, length={len(history) if history else 0}")
+    #print(f"DEBUG: history exists? {history is not None}, length={len(history) if history else 0}")
 
     inventory_dictionary = get_user_data("inventory_dictionary") # Get the inventory dictionary for the current user
     history.append(copy.deepcopy(inventory_dictionary))  # Save a deep copy of the current state to history
@@ -1036,5 +1041,5 @@ def edit_category():
 with app.app_context():
     load_users()
 
-if __name__ == "__main__":
-    app.run(debug=False)
+#if __name__ == "__main__":
+    #app.run(debug=False)

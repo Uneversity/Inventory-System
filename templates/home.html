@@ -3,7 +3,7 @@
 <div class="page-header">
         <h1 style="margin-bottom: auto;">Inventory System</h1>
         <div class="user-info">
-            <span style="color: #ccc; font-size: 1.1em; ">{{username}} · {{role}}</span>
+            <span style="color: #ccc; font-size: 1.1em; ">{{username}} | {{role}}</span>
             <a href="/logout">Sign out</a>
         </div>
     </div>
@@ -34,56 +34,61 @@
         {{rows | safe}}
         </tbody>
     </table>
+</div>
+
+<div class="pagination">
     {{ pagination_html | safe }}
 </div>
 
-    <hr class="divider">
+<hr class="divider">
 
-    <div class="add-label">
-        <h3>Add Item</h3>
-    </div>
 
-    <div class="add-section card-add-item">
-        <form method="POST" action="/add" style="display:contents;">
-            <div class="field">
-                <label>Item</label>
-                <input name="item" placeholder="e.g. Apples">
-            </div>
-            <div class="field">
-                <label>Qty</label>
-                <input type="number" name="quantity" placeholder="0">
-            </div>
-            <div class="field">
-                <label>Category</label>
-                <input name="category" placeholder="Food">
-            </div>
-            <button type="submit" class="btn-add">Add</button> 
-        </form>
-    </div>
 
-    <div class= "footer-bar">
-        <form style="display:contents;" method="POST" action="/undo">
-            <button type="submit" class="btn-ghost">↩ Undo</button>
-        </form>
-        <form style="display:contents;" method="POST" action="/redo">
-            <button type="submit" class="btn-ghost">↪ Redo</button>
-        </form>
-        <a href="/export"><button class="btn-ghost">Export CSV</button></a>
-        <a href="/log"><button class="btn-ghost">Activity log</button></a>
-        <a href="/categories"><button class="btn-ghost">Edit categories</button></a>
-    </div>
+<div class="add-label">
+    <h3>Add Item</h3>
+</div>
 
-    <hr class="divider">
+<div class="add-section card-add-item">
+    <form method="POST" action="/add" style="display:contents;">
+        <div class="field">
+            <label>Item</label>
+            <input name="item" placeholder="e.g. Apples">
+        </div>
+        <div class="field">
+            <label>Qty</label>
+            <input type="number" name="quantity" placeholder="0">
+        </div>
+        <div class="field">
+            <label>Category</label>
+            <input name="category" placeholder="Food">
+        </div>
+        <button type="submit" class="btn-add">Add</button> 
+    </form>
+</div>
 
-    <div>
-        <form method="POST" action="/set_threshold" style="display:contents;">
-            <div class= "threshold-group">
-                <span>Low stock at</span>
-                <input type="number" name="threshold" value={{low_item_threshold}} placeholder="{{low_item_threshold}}" min="0">
-                <button type="submit" class="btn-ghost">Set</button>
-            </div>
-        </form>
-    </div>
+<div class= "footer-bar">
+    <form style="display:contents;" method="POST" action="/undo">
+        <button type="submit" class="btn-ghost">↩ Undo</button>
+    </form>
+    <form style="display:contents;" method="POST" action="/redo">
+        <button type="submit" class="btn-ghost">↪ Redo</button>
+    </form>
+    <a href="/export"><button class="btn-ghost">Export CSV</button></a>
+    <a href="/log"><button class="btn-ghost">Activity log</button></a>
+    <a href="/categories"><button class="btn-ghost">Edit categories</button></a>
+</div>
+
+<hr class="divider">
+
+<div>
+    <form method="POST" action="/set_threshold" style="display:contents;">
+        <div class= "threshold-group">
+            <span>Low stock at</span>
+            <input type="number" name="threshold" value={{low_item_threshold}} placeholder="{{low_item_threshold}}" min="0">
+            <button type="submit" class="btn-ghost">Set</button>
+        </div>
+    </form>
+</div>
 
 <script>
 
