@@ -15,3 +15,15 @@ __pycache__/
 # Virtual environment
 venv/
 .venv/
+
+# Database files — these are created at runtime and should not be tracked
+#*.db means whatever file ends with .db, which is the common extension for SQLite database files. This ensures that any database file created by the application will be ignored by Git and not included in version control.
+instance/
+*.db
+
+#Just in case any JSON and similar files that maybe or may not be used for data storage but are generated during runtime or contain sensitive information, we can ignore them as well.
+data/
+*.json
+*.csv
+instance/
+*.db
