@@ -1039,7 +1039,11 @@ def edit_category():
     return redirect("/")
 
 with app.app_context():
+    # create_all() only creates tables that don't already exist, so this is
+    # safe to run on every boot and guarantees the tables exist before we
+    # query them below.
+    db.create_all()
     load_users()
 
-#if __name__ == "__main__":
-    #app.run(debug=False)
+if __name__ == "__main__":
+    app.run(debug=False)
