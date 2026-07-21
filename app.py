@@ -81,16 +81,16 @@ class ActivityLog(db.Model):
     item = db.Column(db.String(200), nullable=False)
     detail = db.Column(db.Text)
 
-#@app.route("/create_tables")
-#def create_tables():
-    #"""One-time setup: creates all database tables"""
-    #db.create_all()
-    #return "Database tables created! You can delete this route now."
+@app.route("/create_tables")
+def create_tables():
+    """One-time setup: creates all database tables"""
+    db.create_all()
+    return "Database tables created! You can delete this route now."
 
-#@app.route("/debug_db")
-#def debug_db():
-    #db_uri = app.config['SQLALCHEMY_DATABASE_URI']
-    #return f"<h1>Database URI:</h1><p>{db_uri}</p>"
+@app.route("/debug_db")
+def debug_db():
+    db_uri = app.config['SQLALCHEMY_DATABASE_URI']
+    return f"<h1>Database URI:</h1><p>{db_uri}</p>"
 
 # ---------------------------------------------------------------------------
 # DATABASE INTERACTION FUNCTIONS (LOAD/SAVE FOR INVENTORY, LOGS, USERS, CATEGORIES)
